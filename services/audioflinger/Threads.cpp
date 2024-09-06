@@ -3567,6 +3567,50 @@ ssize_t PlaybackThread::threadLoop_write()
                         (pipe->maxFrames() * 7) / 8 : mNormalFrameCount * 2);
             }
         }
+
+        if (property_get_int32("sys.audio.quadspk", 0) == 1) {
+
+            int rotation = property_get_int32("sys.audio.rotation", 0);
+
+            float *dstBuffer = (float*)mSinkBuffer + (offset / sizeof(float));
+            float tmpLeft, tmpRight;
+
+            for (size_t i = 0; i < mNormalFrameCount; ++i) {
+                tmpLeft = dstBuffer[i * 4 + 0];
+                tmpRight = dstBuffer[i * 4 + 1];
+
+                switch (rotation) {
+                case 0:
+                    dstBuffer[i * 4 + 0] = tmpLeft;
+                    dstBuffer[i * 4 + 1] = tmpRight;
+                    dstBuffer[i * 4 + 2] = tmpLeft;
+                    dstBuffer[i * 4 + 3] = tmpRight;
+                    break;
+
+                case 1:
+                    dstBuffer[i * 4 + 0] = tmpRight;
+                    dstBuffer[i * 4 + 1] = tmpRight;
+                    dstBuffer[i * 4 + 2] = tmpLeft;
+                    dstBuffer[i * 4 + 3] = tmpLeft;
+                    break;
+
+                case 2:
+                    dstBuffer[i * 4 + 0] = tmpRight;
+                    dstBuffer[i * 4 + 1] = tmpLeft;
+                    dstBuffer[i * 4 + 2] = tmpRight;
+                    dstBuffer[i * 4 + 3] = tmpLeft;
+                    break;
+
+                case 3:
+                    dstBuffer[i * 4 + 0] = tmpLeft;
+                    dstBuffer[i * 4 + 1] = tmpLeft;
+                    dstBuffer[i * 4 + 2] = tmpRight;
+                    dstBuffer[i * 4 + 3] = tmpRight;
+                    break;
+                }
+            }
+        }
+
         ssize_t framesWritten = mNormalSink->write((char *)mSinkBuffer + offset, count);
         ATRACE_END();
 
